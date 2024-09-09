@@ -1,0 +1,271 @@
+---
+title: "STATS506_ProblemSet1"
+author: "JiaweiQin"
+format: html
+editor: visual
+---
+```{r, echo=F, message=F, warning=F}
+library(tidyverse)
+library(stringr)
+```
+
+## Problem 1
+
+### a. Import data and rename columns
+
+```{r}
+wine <- read.csv('C:/Users/Lenovo/Desktop/24FA/STATS506/HW1/wine.data',header=F)
+names(wine) <- c("Class",
+                 "Alcohol",
+                 "Malic_acid",
+                 "Ash",
+                 "Alcalanity_of_Cash",
+                 "Magnesium",
+                 "Total_phenols",
+                 "Flavaniods",
+                 "Nonflavanoid_phenols",
+                 "Proanthocyanins",
+                 "Color_intensity",
+                 "Hue",
+                 "OD280_OD315",
+                 "Proline")
+```
+
+### b. Check the number of wines in each class
+
+Based on file "wine.names", we have
+
+| Class   | Count |
+|---------|-------|
+| Class 1 | 59    |
+| Class 2 | 71    |
+| Class 3 | 48    |
+
+```{r}
+table(wine$Class)
+```
+
+The number of wines in each class is the same as that shown in the "wine.names" file.
+
+### c.
+
+#### 1. Correlation between alcohol content and color intensity
+
+```{r}
+corr <- cor(wine$Alcohol, wine$Color_intensity)
+corr
+```
+
+Correlation between alcohol content and color intensity is `r corr`.
+
+#### 2. Correlation by class
+```{r}
+wine %>% 
+     group_by(Class) %>% 
+     summarise(correlation = cor(Alcohol, Color_intensity))
+```
+Class 1 has the highest correlation(0.4082913), and class 2 Which has the lowest correlation(0.2697891).
+
+#### 3. What is the alcohol content of the wine with the highest color intensity?
+
+```{r}
+wine[wine$Color_intensity == max(wine$Color_intensity),'Alcohol']
+```
+The alcohol content of the wine with the highest color intensity is `r wine[wine$Color_intensity == max(wine$Color_intensity),'Alcohol']`.
+
+
+#### 4.What percentage of wines had a higher content of proanthocyanins compare to ash?
+
+```{r}
+perc <- nrow(wine[which(wine$Proanthocyanins>wine$Ash),])/nrow(wine)*100
+perc  
+```
+`r round(perc,2)`% wines had a higher content of proanthocyanins compare to ash.
+
+## d. Mean table
+```{r}
+# Calculate Overall Mean
+overall_avg <- wine %>% 
+  summarize_all(mean) %>%
+  mutate(Class = "Overall")
+
+# Calculate Mean by Class
+class_avg <- wine %>% 
+  group_by(Class) %>% 
+  summarize_all(mean)
+
+# bind the 2 modules
+result <- rbind(overall_avg , class_avg)
+result
+
+```
+
+## e. T-tests
+
+```{r}
+t.test(wine$Total_phenols[wine$Class == 1], wine$Total_phenols[wine$Class == 2])
+```
+```{r}
+t.test(wine$Total_phenols[wine$Class == 1], wine$Total_phenols[wine$Class == 3])
+```
+
+```{r}
+t.test(wine$Total_phenols[wine$Class == 2], wine$Total_phenols[wine$Class == 3])
+```
+All 3 p-values are less than 0.05, indicating that the level of phenols differs across the three classes.
+
+## Problem 2
+### a. Load data
+```{r}
+AM <- read.csv('C:/Users/Lenovo/Desktop/24FA/STATS506/HW1/AskAManager.csv')
+```
+
+
+### b. Rename columns
+
+```{r}
+col_names <- c('idx','time','age','industry','job','job_annotation','annual_salary','additional_compensation','currency','currency_if_other','additional_income_info','country','state','city','years_of_experience','years_in_field','education_level','gender','race')
+
+names(AM) <- col_names
+```
+
+
+### c. Count obs
+
+```{r}
+nrow(AM)
+nrow(AM[AM$currency=='USD',])
+```
+The number of total observations is `r nrow(AM)`, and the number of observations paid by USD is `r nrow(AM[AM$currency=='USD',])`.
+
+### d. Filter based on work years
+```{r}
+# Extract upper bound
+data <- AM %>%
+  mutate(age_upper = case_when(
+    age == '65 or over' ~ 65,
+    age == 'under 18' ~ 18,
+    str_detect(age, '-') ~ as.numeric(str_split(age, '-')[[1]][2]),
+    TRUE ~ NA_real_
+  ))
+
+# Extract lower bound
+extract_lower <- function(value) {
+  if (value == '1 year or less') {
+    return(1)
+  } else if (value == '41 years or more') {
+    return(41)
+  } else if (str_detect(value, '-')) {
+    return(as.numeric(str_split(value, '-')[[1]][1]))
+  } else {
+    return(NA_real_)
+  }
+}
+
+data <- data %>%
+  mutate(
+    experience_lower = sapply(years_of_experience, extract_lower),
+    field_lower = sapply(years_in_field, extract_lower)
+  )
+
+n <- data %>% 
+     filter(age_upper > 18,
+            experience_lower >= field_lower,
+            age_upper - experience_lower >= 18) %>% 
+     nrow()
+```
+The number of reasonable observations is `r n`.
+
+### e. Filter based on salary
+
+```{r}
+
+# Calculate Q1 & Q3
+q1_income <- quantile(AM$annual_salary, 0.25, na.rm = TRUE)
+q3_income <- quantile(AM$annual_salary, 0.75, na.rm = TRUE)
+
+# 计算IQR
+IQR <- q3_income - q1_income
+
+# 计算异常值的上下界
+LB <- q1_income - 1.5 * IQR
+UB <- q3_income + 1.5 * IQR
+
+# 过滤掉极端值
+AM %>% filter(annual_salary >= LB & annual_salary <= UB) %>%  nrow()
+
+
+```
+The threshold was chosen based on [IQR](https://medium.com/@pp1222001/outlier-detection-and-removal-using-the-iqr-method-6fab2954315d).
+
+## Problem 3
+
+### a. IsPalindromic
+
+```{r}
+isPalindromic <- function(num){
+  
+  # check if input is a positive integer
+  if (!is.numeric(num) || num <= 0 || num != floor(num)) {
+    stop("Input must be a positive integer.")
+  }
+  
+  reverse <- ''
+  
+  # split character
+  chr <-  unlist(strsplit(as.character(num), NULL))
+  
+  # reverse number
+  for (i in seq_along(chr)) {reverse <- paste0(chr[i], reverse) }
+  
+  # convert reversed character to number
+  reverse <- as.numeric(reverse)
+  
+  # check if it is palindromic
+  is_palindromic <- (reverse == num)
+  
+  # return results
+  return(list(isPalindromic = is_palindromic, reversed = reverse))
+         
+  }
+
+
+isPalindromic(728827)
+isPalindromic(39951)
+
+```
+All numbers ending with 0 are not palindromes. In my function, such numbers are not special cases. We are not required to deal with such cases specially.
+
+### b. Next Palindrome
+```{r}
+nextPalindrome <- function(num) {
+  # check if input is a positive integer
+  if (!is.numeric(num) || num <= 0 || num != floor(num)) {
+    stop("Input must be a positive integer.")
+  }
+  
+  # find the next palindromic number
+  nxt <- num + 1
+  while (!isPalindromic(nxt)$isPalindromic) {
+    nxt <- nxt + 1
+  }
+  
+  return(nxt)
+}
+
+nextPalindrome(7152)
+nextPalindrome(765431537)
+```
+
+
+
+### c. Test NextPalindrome
+
+```{r}
+nextPalindrome(391)
+nextPalindrome(9928)
+nextPalindrome(19272719)
+nextPalindrome(109)
+nextPalindrome(2)
+```
+
