@@ -4,6 +4,7 @@ author: "JiaweiQin"
 format: html
 editor: visual
 ---
+
 git_address:"https://github.com/JiaweiQin-UM/STATS506.git"
 
 ```{r, echo=F, message=F, warning=F}
@@ -61,11 +62,13 @@ corr
 Correlation between alcohol content and color intensity is `r corr`.
 
 #### 2. Correlation by class
+
 ```{r}
 wine %>% 
      group_by(Class) %>% 
      summarise(correlation = cor(Alcohol, Color_intensity))
 ```
+
 Class 1 has the highest correlation(0.4082913), and class 2 Which has the lowest correlation(0.2697891).
 
 #### 3. What is the alcohol content of the wine with the highest color intensity?
@@ -73,8 +76,8 @@ Class 1 has the highest correlation(0.4082913), and class 2 Which has the lowest
 ```{r}
 wine[wine$Color_intensity == max(wine$Color_intensity),'Alcohol']
 ```
-The alcohol content of the wine with the highest color intensity is `r wine[wine$Color_intensity == max(wine$Color_intensity),'Alcohol']`.
 
+The alcohol content of the wine with the highest color intensity is `r wine[wine$Color_intensity == max(wine$Color_intensity),'Alcohol']`.
 
 #### 4.What percentage of wines had a higher content of proanthocyanins compare to ash?
 
@@ -82,9 +85,11 @@ The alcohol content of the wine with the highest color intensity is `r wine[wine
 perc <- nrow(wine[which(wine$Proanthocyanins>wine$Ash),])/nrow(wine)*100
 perc  
 ```
+
 `r round(perc,2)`% wines had a higher content of proanthocyanins compare to ash.
 
 ## d. Mean table
+
 ```{r}
 # Calculate Overall Mean
 overall_avg <- wine %>% 
@@ -107,6 +112,7 @@ result
 ```{r}
 t.test(wine$Total_phenols[wine$Class == 1], wine$Total_phenols[wine$Class == 2])
 ```
+
 ```{r}
 t.test(wine$Total_phenols[wine$Class == 1], wine$Total_phenols[wine$Class == 3])
 ```
@@ -114,14 +120,16 @@ t.test(wine$Total_phenols[wine$Class == 1], wine$Total_phenols[wine$Class == 3])
 ```{r}
 t.test(wine$Total_phenols[wine$Class == 2], wine$Total_phenols[wine$Class == 3])
 ```
+
 All 3 p-values are less than 0.05, indicating that the level of phenols differs across the three classes.
 
 ## Problem 2
+
 ### a. Load data
+
 ```{r}
 AM <- read.csv('C:/Users/Lenovo/Desktop/24FA/STATS506/HW1/AskAManager.csv')
 ```
-
 
 ### b. Rename columns
 
@@ -131,16 +139,17 @@ col_names <- c('idx','time','age','industry','job','job_annotation','annual_sala
 names(AM) <- col_names
 ```
 
-
 ### c. Count obs
 
 ```{r}
 nrow(AM)
 nrow(AM[AM$currency=='USD',])
 ```
+
 The number of total observations is `r nrow(AM)`, and the number of observations paid by USD is `r nrow(AM[AM$currency=='USD',])`.
 
 ### d. Filter based on work years
+
 ```{r}
 # Extract upper bound
 data <- AM %>%
@@ -176,6 +185,7 @@ n <- data %>%
             age_upper - experience_lower >= 18) %>% 
      nrow()
 ```
+
 The number of reasonable observations is `r n`.
 
 ### e. Filter based on salary
@@ -198,6 +208,7 @@ AM %>% filter(annual_salary >= LB & annual_salary <= UB) %>%  nrow()
 
 
 ```
+
 The threshold was chosen based on [IQR](https://medium.com/@pp1222001/outlier-detection-and-removal-using-the-iqr-method-6fab2954315d).
 
 ## Problem 3
@@ -205,6 +216,15 @@ The threshold was chosen based on [IQR](https://medium.com/@pp1222001/outlier-de
 ### a. IsPalindromic
 
 ```{r}
+#' Check if a number is Palindromic
+#'
+#' @param num A positive integer. The function will check whether this number is palindromic.
+#'
+#' @return A list with two elements: 
+#' \item{isPalindromic}{Logical value indicating whether the input number is palindromic.}
+#' \item{reversed}{The reversed integer.}
+#'
+#' @export
 isPalindromic <- function(num){
   
   # check if input is a positive integer
@@ -236,10 +256,19 @@ isPalindromic(728827)
 isPalindromic(39951)
 
 ```
+
 All numbers ending with 0 are not palindromes. In my function, such numbers are not special cases. We are not required to deal with such cases specially.
 
 ### b. Next Palindrome
+
 ```{r}
+#' Find the Next Palindromic Number
+#'
+#' @param num A positive integer. The function will find the next palindromic number after this value.
+#'
+#' @return A positive integer that is the next palindromic number greater than the input.
+#' 
+#' @export
 nextPalindrome <- function(num) {
   # check if input is a positive integer
   if (!is.numeric(num) || num <= 0 || num != floor(num)) {
@@ -259,8 +288,6 @@ nextPalindrome(7152)
 nextPalindrome(765431537)
 ```
 
-
-
 ### c. Test NextPalindrome
 
 ```{r}
@@ -270,4 +297,3 @@ nextPalindrome(19272719)
 nextPalindrome(109)
 nextPalindrome(2)
 ```
-
