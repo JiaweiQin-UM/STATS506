@@ -4,6 +4,8 @@ author: "JiaweiQin"
 format: html
 editor: visual
 ---
+git_address:"https://github.com/JiaweiQin-UM/STATS506.git"
+
 ```{r, echo=F, message=F, warning=F}
 library(tidyverse)
 library(stringr)
