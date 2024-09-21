@@ -4,7 +4,7 @@ author: "Jiawei Qin"
 format: html
 ---
 ## Load Packages
-```{r, echo=FALSE, warning=FALSE,message=FALSE}
+```{r, warning=FALSE,message=FALSE}
 library(microbenchmark)
 library(tidyverse)
 library(dplyr)
