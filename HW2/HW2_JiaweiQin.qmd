@@ -1,8 +1,12 @@
 ---
-title: "HW2"
-author: "Jiawei Qin"
+title: "STATS506_ProblemSet2"
+author: "JiaweiQin"
 format: html
+editor: visual
 ---
+
+git_address:["https://github.com/JiaweiQin-UM/STATS506.git"](https://github.com/JiaweiQin-UM/STATS506.git)
+
 ## Load Packages
 ```{r, warning=FALSE,message=FALSE}
 library(microbenchmark)
