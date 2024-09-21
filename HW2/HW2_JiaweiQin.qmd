@@ -1,0 +1,461 @@
+---
+title: "HW2"
+author: "Jiawei Qin"
+format: html
+---
+## Load Packages
+```{r, echo=FALSE, warning=FALSE,message=FALSE}
+library(microbenchmark)
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(emmeans)
+library(interactions)
+```
+
+## Problem 1
+
+### a.
+
+#### Version: loop
+
+```{r}
+#' Dice Game: Loop Version
+#'
+#' @param n An integer specifying the number of dice to roll. 
+#'
+#' @return The total winnings or losses after `n` rolls.
+
+play_dice_m1 <- function(n){
+  
+  # try and error
+  if( n < 1){
+    stop('Inputs should be a positive integer.')
+  }
+  
+  # start dice game
+  roll <- sample(1:6, n, replace = TRUE)
+  total <- 0
+  
+  # start the loop
+  for (i in 1:n) {
+    total <- total -2
+    if (roll[i] %in% c(3,5)){
+      total <- total + 2*roll[i]
+    }
+  }
+  # return output
+  return(total)
+}
+
+
+play_dice_m1(10)
+play_dice_m1(10)
+```
+
+#### Version: vector
+
+```{r}
+#' Dice Game: Vectorized Version
+#'
+#' @param n An integer specifying the number of dice to roll. 
+#'
+#' @return The total winnings or losses after `n` rolls.
+
+play_dice_m2 <- function(n){
+  
+  # try and error
+  if( n < 1){
+    stop('Inputs should be a positive integer.')
+  }
+  
+  # start dice game
+  roll <- sample(1:6, n, replace = TRUE)
+  
+  # calculate total
+  total <- -2 * n + sum(ifelse(roll %in% c(3, 5), 2 * roll, 0))
+  
+  # return output
+  return(total)
+}
+
+play_dice_m2(10)
+play_dice_m2(10)
+```
+
+#### Version: table
+
+```{r}
+#' Dice Game: Table Version
+#'
+#' @param n An integer specifying the number of dice to roll. 
+#'
+#' @return The total winnings or losses after `n` rolls.
+#' 
+play_dice_m3 <- function(n){
+  
+  # try and error
+  if( n < 1){
+    stop('Inputs should be a positive integer.')
+  }
+  
+  # start dice game
+  roll <- sample(1:6, n, replace = TRUE)
+  roll_table <- table(factor(roll,levels=1:6))
+  
+  # calculate total
+  total <- roll_table[3]*2*3 + roll_table[5]*2*5 -2*n
+  names(total) <- NULL
+  
+  # return output
+  return(total)
+}
+
+
+play_dice_m3(10)
+play_dice_m3(10)
+```
+
+#### Version: apply function
+
+```{r}
+#' Dice Game: Apply function Version
+#'
+#' @param n An integer specifying the number of dice to roll. 
+#'
+#' @return The total winnings or losses after `n` rolls.
+#' 
+play_dice_m4 <- function(n){
+  
+  # try and error
+  if( n < 1){
+    stop('Inputs should be a positive integer.')
+  }
+  
+  # start dice game
+  roll <- sample(1:6, n, replace = TRUE)
+  
+  # calculate total
+  total <- -2*n +sum(vapply(roll, function(i){
+    if (i %in% c(3,5)){ return(i*2) } else { return(0) }
+  }, numeric(1)))
+  
+  # return output
+  return(total)
+}
+
+
+play_dice_m4(10)
+play_dice_m4(10)
+```
+
+### b.
+
+```{r}
+# Run each version with input 3
+list(
+  version1 = play_dice_m1(3),
+  version2 = play_dice_m2(3),
+  version3 = play_dice_m3(3),
+  version4 = play_dice_m4(3)
+)
+```
+
+```{r}
+# Run each version with input 3000
+list(
+  version1 = play_dice_m1(3000),
+  version2 = play_dice_m2(3000),
+  version3 = play_dice_m3(3000),
+  version4 = play_dice_m4(3000)
+)
+```
+
+### c.
+
+#### Version: loop
+
+```{r}
+#' Dice Game: Loop Version
+#'
+#' @param n An integer specifying the number of dice to roll. 
+#'
+#' @return The total winnings or losses after `n` rolls.
+
+seed_play_dice_m1 <- function(n, seed){
+  
+  # try and error
+  if( n < 1){
+    stop('Inputs should be a positive integer.')
+  }
+  
+  # set seed
+  set.seed(seed)
+  
+  # start dice game
+  roll <- sample(1:6, n, replace = TRUE)
+  total <- 0
+  
+  # start the loop
+  for (i in 1:n) {
+    total <- total -2
+    if (roll[i] %in% c(3,5)){
+      total <- total + 2*roll[i]
+    }
+  }
+  # return output
+  return(total)
+}
+
+```
+
+#### Version: vector
+
+```{r}
+#' Dice Game: Vectorized Version
+#'
+#' @param n An integer specifying the number of dice to roll. 
+#'
+#' @return The total winnings or losses after `n` rolls.
+
+seed_play_dice_m2 <- function(n, seed){
+  
+  # try and error
+  if( n < 1){
+    stop('Inputs should be a positive integer.')
+  }
+  
+  # set seed
+  set.seed(seed)
+  
+  # start dice game
+  roll <- sample(1:6, n, replace = TRUE)
+  
+  # calculate total
+  total <- -2 * n + sum(ifelse(roll %in% c(3, 5), 2 * roll, 0))
+  
+  # return output
+  return(total)
+}
+```
+
+#### Version: table
+
+```{r}
+#' Dice Game: Table Version
+#'
+#' @param n An integer specifying the number of dice to roll. 
+#'
+#' @return The total winnings or losses after `n` rolls.
+#' 
+seed_play_dice_m3 <- function(n, seed){
+  
+  # try and error
+  if( n < 1){
+    stop('Inputs should be a positive integer.')
+  }
+  
+  # set seed
+  set.seed(seed)
+  
+  # start dice game
+  roll <- sample(1:6, n, replace = TRUE)
+  roll_table <- table(factor(roll,levels=1:6))
+  
+  # calculate total
+  total <- roll_table[3]*2*3 + roll_table[5]*2*5 -2*n
+  names(total) <- NULL
+  
+  # return output
+  return(total)
+}
+```
+
+#### Version: apply function
+
+```{r}
+#' Dice Game: Apply function Version
+#'
+#' @param n An integer specifying the number of dice to roll. 
+#'
+#' @return The total winnings or losses after `n` rolls.
+#' 
+seed_play_dice_m4 <- function(n, seed){
+  
+  # try and error
+  if( n < 1){
+    stop('Inputs should be a positive integer.')
+  }
+  
+  # set seed
+  set.seed(seed)
+  
+  # start dice game
+  roll <- sample(1:6, n, replace = TRUE)
+  
+  # calculate total
+  total <- -2*n +sum(vapply(roll, function(i){
+    if (i %in% c(3,5)){ return(i*2) } else { return(0) }
+  }, numeric(1)))
+  
+  # return output
+  return(total)
+}
+```
+
+```{r}
+# Run each version with input 3
+list(
+  version1 = seed_play_dice_m1(3, seed =42),
+  version2 = seed_play_dice_m2(3, seed =42),
+  version3 = seed_play_dice_m3(3, seed =42),
+  version4 = seed_play_dice_m4(3, seed =42)
+)
+```
+
+```{r}
+# Run each version with input 3000
+list(
+  version1 = seed_play_dice_m1(3000, seed =42),
+  version2 = seed_play_dice_m2(3000, seed =42),
+  version3 = seed_play_dice_m3(3000, seed =42),
+  version4 = seed_play_dice_m4(3000, seed =42)
+)
+```
+
+### d. Microbenchmark
+
+```{r}
+microbenchmark(loop   = seed_play_dice_m1(1000, seed =42),
+               vector = seed_play_dice_m2(1000, seed =42),
+               table  = seed_play_dice_m3(1000, seed =42),
+               apply  = seed_play_dice_m4(1000, seed =42))
+```
+
+```{r}
+microbenchmark(loop   = seed_play_dice_m1(100000, seed =42),
+               vector = seed_play_dice_m2(100000, seed =42),
+               table  = seed_play_dice_m3(100000, seed =42),
+               apply  = seed_play_dice_m4(100000, seed =42))
+```
+
+For large inputs, the execution time increases significantly. The function using the "apply" family consistently has the longest execution time, followed by the loop-based implementation, regardless of whether the input is large or small. The vector method takes the shortest execution time.
+
+### e. Monte Carlo
+
+```{r}
+# Monte Carlo Simulation
+mc_simulation <- function(n, iterations, seed) {
+  # use the vector method
+  results <- replicate(iterations, seed_play_dice_m2(n, seed))  
+  return(mean(results))
+}
+
+
+average_winnings <- mc_simulation(1000, 10000, seed=42)
+average_winnings
+```
+
+It is not a fair game, and the play tend to win more than they cost.For each round of roll, we have $E(winngs\_or\_losses)=\frac{4}{6}\cdot0+\frac{1}{6}\cdot2\cdot3+\frac{1}{6}\cdot2\cdot5=\frac{2}{3}>0$
+
+## Problem 2
+### a. Read file
+
+```{r}
+df <- read.csv("C:/Users/Lenovo/Desktop/24FA/STATS506/HW2/cars.csv")
+head(df)
+```
+
+```{r}
+# View column names
+colnames(df)
+```
+```{r}
+names(df) <- c("height", "length", "width", "driveline", "engine_type", "hybrid", "gears_num", "transmission", "mpg_city", "fuel_type", "mpg_hwy", "class", "ID", "make", "model_year", "year", "horsepower", "torque")
+```
+
+### b. Rename
+```{r}
+car_gas <- df[df$fuel_type=='Gasoline',]
+head(car_gas)
+nrow(car_gas)
+```
+
+### c. Log-transformation
+
+```{r}
+car_gas$mpg_hwy %>% summary
+```
+
+```{r}
+# distribution of highway MPG
+ggplot() + geom_histogram(aes(car_gas$mpg_hwy),bins = 50) + 
+  ggtitle( "Highway MPG Distribution") + 
+  xlab("MPG") + 
+  theme( plot.title = element_text(hjust = 0.5, face = "bold") )
+```
+
+```{r}
+# Log transformation example (if distribution is skewed)
+car_gas %>%
+  mutate(mpg_hwy = log(mpg_hwy)) %>%
+  ggplot() + geom_histogram(aes(mpg_hwy),bins = 50) + 
+  ggtitle( "Log-transformed Highway MPG Distribution") + 
+  xlab("Log MPG") + 
+  theme( plot.title = element_text(hjust = 0.5, face = "bold") )
+```
+
+
+### d. Fit model
+```{r}
+# replace by log transformation
+car_gas <- car_gas %>% mutate(mpg_hwy = log(mpg_hwy))
+```
+
+```{r}
+# fit the model
+f1 <- lm( mpg_hwy ~ torque + horsepower + height + length + width + as.factor(year), data = car_gas )
+
+# result
+summary(f1)
+```
+p-value of torque is less than 0.05, which means torque is significantly related to MPG on the highway. The coefficient of torque is -2.294e-03.
+
+Holding the horsepower of the engine, all three dimensions of the car, and the year the car was released constant, an unit increase of torque is predicted to yield 0.002294 lower MPG on the highway, on average.
+
+### e. Interaction model
+```{r}
+# fit the model with interaction
+f2 <- lm(mpg_hwy ~ horsepower*torque + height + length + width +
+            as.factor(year), data = car_gas)
+
+# result
+summary(f2)
+```
+```{r}
+car_gas %>% select(torque,horsepower) %>% summary
+```
+
+```{r}
+emmip(f2, horsepower ~ torque, at = list(horsepower = c(150, 250, 350),
+                                          torque = c(200, 300, 400)))
+```
+
+
+### f. Matrix
+```{r}
+# create matrix
+X <- model.matrix(mpg_hwy ~ horsepower + torque + height + length +
+                    width + as.factor(year), data = car_gas)
+y <- car_gas$mpg_hwy
+
+# calculate beta_hat
+beta_hat <- solve(t(X)%*%X)%*%t(X)%*%y
+
+# comparison
+cbind(f1$coef, beta_hat)
+```
+Therefore, these 2 methods get the same result.
+
+
+
