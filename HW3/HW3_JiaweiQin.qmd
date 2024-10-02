@@ -1,0 +1,328 @@
+---
+title: "STATS506_ProblemSet3"
+author: "JiaweiQin"
+format: html
+editor: visual
+---
+
+git_address:["https://github.com/JiaweiQin-UM/STATS506.git"](https://github.com/JiaweiQin-UM/STATS506.git)
+
+## Load Packages
+```{r, warning=FALSE,message=FALSE}
+library(haven)
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(knitr)
+library(stargazer)
+library(broom)
+library(margins)
+library(DBI)
+library(RSQLite)
+```
+
+
+## Problem 1
+
+### a. Read Files
+
+```{r}
+#read files
+
+# set path
+path = "C:/Users/Lenovo/Desktop/24FA/STATS506/HW3"
+  
+# read VIX_D dataset
+vix_d <- read_xpt(file.path(path, "VIX_D.xpt"))
+
+# read DEMO_D dataset
+demo_d <- read_xpt(file.path(path, "DEMO_D.xpt"))
+
+# merge files
+df <- merge(vix_d, demo_d, by = "SEQN")
+
+# total size of the sample
+nrow(df)
+```
+The total sample size after inner join is 6980.
+
+### b.Proportion of Respondents
+
+```{r}
+# rename columns
+names(df)[names(df) == "RIDAGEYR"] <- "Age"
+names(df)[names(df) == "VIQ220"] <- "Glass"
+names(df)[names(df) == "RIAGENDR"] <- "Gender"
+names(df)[names(df) == "RIDRETH1"] <- "Race"
+names(df)[names(df) == "INDFMPIR"] <- "PIR"
+
+# transfer to 0-1 variable
+# Glass=1: wear glass
+# Glass=2: don't wear glass
+df$Glass <- ifelse(df$Glass == 1, 1, 0)
+```
+
+
+```{r}
+# calculate proportion
+proportions <- df %>%
+  mutate(Agecat = cut(Age, breaks = seq(0, 100, by = 10), right = FALSE),
+         Glass = ifelse(Glass == 9, NA, Glass)) %>% 
+  group_by(Agecat) %>%
+  summarize(proportion = mean(Glass == 1, na.rm = TRUE))
+
+# export table
+kable(proportions, 
+      format = "html",    
+      digits = 3, 
+      align = "c",        
+      col.names = c("Age", "Proportion Wearing Glasses"),
+      caption = "Proportion of Respondents Wearing Glasses by Age",
+      table.attr = 'style="width:50%; margin-left:auto; margin-right:auto;"')  
+
+```
+
+### c. Fit models
+
+```{r}
+df_fit <- df %>%
+  mutate( Female = as.factor(ifelse(Gender==2,1,0)),
+          Race = as.factor(Race))
+
+```
+
+#### 1. with age
+```{r}
+model1 <- glm(Glass ~ Age, data = df_fit, family = binomial)
+summary(model1)
+```
+
+#### 2. with age, race, gender
+```{r}
+model2 <- glm(Glass ~ Age + Race + Female, data = df_fit, family = binomial)
+summary(model2)
+```
+
+#### 3. with age, race, gender, Poverty Income ratio
+```{r}
+model3 <- glm(Glass ~ Age + Race + Female + PIR, data = df_fit, family = binomial)
+summary(model3)
+```
+
+#### Summary
+
+```{r}
+# create summarize table
+results <- list(model1, model2, model3)
+
+model_summary <- data.frame(
+  Model = c("Model 1: Age", 
+            "Model 2: Age + Race + Female", 
+            "Model 3: Age + Race + Female + PIR"),
+  Sample_Size = sapply(results, function(x) sum(!is.na(x$model$Glass))),
+  Pseudo_R2 = sapply(results, function(x) 1 - (x$deviance / x$null.deviance)),
+  AIC = sapply(results, AIC)
+)
+
+coefficients <- lapply(results, function(model) {
+  coef(model)
+})
+
+coef_names <- unique(unlist(lapply(coefficients, names)))
+
+coefficients_df <- data.frame(matrix(NA, nrow = length(coefficients), ncol = length(coef_names)))
+colnames(coefficients_df) <- coef_names
+rownames(coefficients_df) <- c("Model 1", "Model 2", "Model 3")
+
+for (i in seq_along(coefficients)) {
+  coefficients_df[i, names(coefficients[[i]])] <- coefficients[[i]]
+}
+
+final_table <- cbind(model_summary, coefficients_df)
+
+stargazer(final_table, type = "text", summary = FALSE,
+          title = "Estimated Coefficients and Model Statistics",
+          digits = 3)
+
+```
+### d. Difference Test
+```{r}
+summary(model3)
+```
+
+```{r}
+# calculate margin effect for female
+margins_result <- margins(model3, variable = "Female")
+margins_result
+```
+
+```{r}
+# comparison
+pwcompare_result <- summary(margins_result)
+pwcompare_result
+```
+The estimated odds ratio for females is about 0.52 and is statistically significant. Therefore, the odds of men and women being wears of glasess/contact lenses for distance vision differs. 
+
+Additionally, females have a statistically significantly higher probability of wearing glasses/contact lenses for distance vision than males.
+
+
+## Problem 2
+
+```{r}
+# read file
+sakila <- dbConnect(SQLite(), "C:/Users/Lenovo/Desktop/24FA/STATS506/HW3/sakila_master.db")
+dbListTables(sakila)
+```
+```{r}
+dbListFields(sakila, "film")
+```
+```{r}
+dbListFields(sakila, "film_category")
+```
+```{r}
+dbListFields(sakila, "category")
+```
+```{r}
+dbListFields(sakila, "address")
+```
+
+```{r}
+dbListFields(sakila, "city")
+```
+
+```{r}
+dbListFields(sakila, "country")
+```
+### a. 
+```{r}
+dbGetQuery(sakila, "
+SELECT release_year AS year, COUNT(*) AS released_total
+FROM film
+WHERE release_year = ( SELECT MIN(release_year)  FROM film )
+")
+```
+2006 is the oldest movie from, and  1000 movies were released in that year.
+
+### b. 
+#### R
+```{r}
+fc <- dbGetQuery(sakila, "SELECT * FROM film_category")
+cat <- dbGetQuery(sakila, "SELECT * FROM category")
+catcount <- table(fc$category_id)
+mincat <- which.min(catcount)
+c(cat$name[cat$category_id == mincat], catcount[mincat])
+```
+#### SQL
+```{r}
+dbGetQuery(sakila, "
+SELECT c.name, COUNT() AS movie_count
+FROM film f
+JOIN film_category fc ON f.film_id = fc.film_id
+JOIN category c ON fc.category_id = c.category_id
+GROUP BY c.name
+ORDER BY movie_count
+LIMIT 1
+")
+```
+Music is the least common in the data, and 51 movies are of this genre.
+
+### c. 
+#### R
+```{r}
+
+customer <- dbGetQuery(sakila, "SELECT * FROM customer")
+address  <- dbGetQuery(sakila, "SELECT * FROM address")
+city     <- dbGetQuery(sakila, "SELECT * FROM city")
+country  <- dbGetQuery(sakila, "SELECT * FROM country")
+
+merged_data <- customer %>%
+  left_join(address, by = "address_id") %>%
+  left_join(city, by = "city_id") %>%
+  left_join(country, by = "country_id")
+
+
+merged_data %>%
+  count(country) %>%
+  filter(n == 13)
+```
+
+#### SQL
+```{r}
+dbGetQuery(sakila, "
+SELECT cnty.country AS country, COUNT(*) AS customer_numbers
+FROM customer c
+JOIN address a ON c.address_id = a.address_id
+JOIN city ci ON a.city_id = ci.city_id
+JOIN country cnty ON ci.country_id = cnty.country_id
+GROUP BY cnty.country
+HAVING COUNT(*) = 13
+")
+```
+Argentina and Nigeria have exactly 13 customers.
+
+```{r}
+dbDisconnect(sakila)
+```
+
+
+## Problem 3
+```{r}
+us500 <- read.csv(file.path(path,"us-500.csv"))
+head(us500)
+```
+### a. TLD
+```{r} 
+length(us500$email[grepl("net$", us500$email)])/nrow(us500)
+```
+14% of email addresses are hosted at a domain with TLD “.com” 
+
+### b. Non Alphanumeric Character
+```{r}
+# extract username
+usernames <- sub("@.*", "", us500$email)
+domains <- sub("\\.[a-z]{3}$", "", sub(".*@", "", us500$email))
+
+# regexp search
+username_non_alphanumeric <- grepl("[^a-zA-Z0-9]", usernames)
+domain_non_alphanumeric <- grepl("[^a-zA-Z0-9]", domains)
+
+# calculate proportion
+mean(username_non_alphanumeric | domain_non_alphanumeric)
+```
+
+50.6% of email addresses have at least one non alphanumeric character.
+
+### c. Phone Area Code
+```{r}
+ac1 <- substr(us500$phone1, 1, 3)
+ac2 <- substr(us500$phone2, 1, 3)
+sort(table(c(ac1, ac2)), decreasing = TRUE)[1:5]
+```
+"973","212","215","410" and "201" are the top 5 most common area codes.
+
+### d. Histogram
+```{r}
+aprt <- us500$address[grepl("[0-9]+$", us500$address)]
+num <- as.numeric(regmatches(aprt, regexpr("[0-9]+$", aprt)))
+
+```
+
+```{r}
+hist(log(num),
+     main = "Histogram of Log-Transformed Apartment Numbers",  
+     xlab = "Log of Apartment Numbers", 
+     ylab = "Frequency",        
+     border = "white")    
+```
+
+
+
+### e. Distribution
+
+```{r}
+table(substr(num, 1, 1))
+```
+Based on the table, the frequency of most digits is nearly uniform, which contradicts Benford's Law. This suggests that the dataset may not represent real-world data accurately.
+
+
+
