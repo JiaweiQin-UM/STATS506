@@ -1,0 +1,320 @@
+---
+title: "STATS506_ProblemSet4"
+author: "Jiawei Qin"
+format: html
+editor: visual
+execute:
+  error: true
+---
+
+git_address:["https://github.com/JiaweiQin-UM/STATS506.git"](https://github.com/JiaweiQin-UM/STATS506.git)
+
+## Load Packages
+```{r, warning=FALSE,message=FALSE}
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(tidyverse)
+library(nycflights13)
+```
+
+
+## Problem 1
+
+### a. Airport Delay
+```{r}
+flights %>% 
+  group_by(origin) %>%
+  summarise(mean_delay = mean(dep_delay, na.rm=TRUE), 
+            median_delay = median(dep_delay, na.rm=TRUE),
+            cnt = n()) %>%
+  filter(cnt >= 10)  %>%
+  ungroup %>%
+  left_join(airports, by = c("origin" = "faa")) %>%
+  select(name, mean_delay, median_delay) %>%
+  arrange(desc(mean_delay))
+
+```
+
+
+```{r}
+flights %>% 
+  group_by(dest) %>%
+  summarise(mean_delay = mean(dep_delay, na.rm=TRUE), 
+            median_delay = median(dep_delay, na.rm=TRUE),
+            cnt = n()) %>%
+  filter(cnt >= 10)  %>%
+  ungroup %>%
+  left_join(airports, by = c("dest" = "faa")) %>%
+  mutate(name = ifelse(is.na(name), dest, name)) %>%
+  select(name, mean_delay, median_delay) %>%
+  arrange(desc(mean_delay)) %>%
+  print(n=count(.))
+
+```
+
+###b. Fastest Average Speed
+```{r}
+flights %>% 
+  left_join(planes, by = "tailnum") %>%
+  mutate(fly_hours = air_time/60,
+         mph = distance/fly_hours) %>%
+  group_by(model) %>%
+  summarize(fast_avgspeed = mean(mph, na.rm = TRUE),
+            cnt = n()) %>%
+  arrange(desc(fast_avgspeed)) %>%
+  slice(1)
+  
+```
+
+## Problem 2
+```{r}
+nnmaps <- read_csv("chicago-nmmaps.csv")
+```
+
+```{r}
+##' Get average monthly temperature
+##' @param month A numeric (1-12) or string representing the month.
+##' @param yearA numeric value indicating the year. Must be between 1997 and 2000.
+##' @param data Oringin data set containing columns `temp`, `month_numeric`, and `year`
+##' @param average_fn Function to compute average. Default is `mean`.
+##' @param celsius Logical; if TRUE, converts the temperature to Celsius. Default is FALSE.
+##' @return Average temperature
+get_temp <- function(month, year, data, 
+                     celsius = FALSE, 
+                     average_fn = mean){
+  
+  # Process month format
+  if(month %>% is.numeric)
+    {
+      if (month < 1 | month > 12) 
+          {stop("input month should be 1-12.")}
+    }
+  else if(month %>% is.character)
+    {
+      months <- c("January", "February", "March", "April", "May", "June", "July","August", "September", "October", "November", "December")
+  
+      month %>%
+          match.arg(months) %>%
+          `==`(months) %>%
+          which -> month
+    }
+  else
+    { stop('input month should be a string or a numeric 1-12.') }
+  
+  # Process year format
+  if(!year %>% is.numeric)
+    {
+      stop( 'input year should be numeric.' ) 
+    }
+  if(year < 1997 | year > 2000)
+    {
+      stop('input year should by 1997-2000.')
+    }
+  
+  # Check function availability
+  if (!(average_fn %>% is.function)) 
+    {
+      stop("average_fn must be a function")
+    }
+  year_select <- year
+  # Get temperature
+  data %>% 
+    select(temp, month_numeric, year) %>%
+    filter(month_numeric == month,
+           year == year_select) %>%
+    summarise(target_temp = average_fn(temp)) %>%
+    mutate(target_temp = ifelse(isTRUE(celsius), 
+                                5/9*(target_temp - 32),
+                                target_temp)) %>%
+    as.numeric -> result
+  
+  # Output
+  return(result)
+    
+}
+
+```
+
+
+```{r}
+get_temp("Apr", 1999, data = nnmaps)
+get_temp("Apr", 1999, data = nnmaps, celsius = TRUE)
+get_temp(10, 1998, data = nnmaps, average_fn = median)
+```
+
+
+```{r}
+get_temp(13, 1998, data = nnmaps)
+```
+
+
+```{r}
+get_temp(2, 2005, data = nnmaps)
+```
+
+
+```{r}
+get_temp("November", 1999, data =nnmaps, celsius = TRUE,
+         average_fn = function(x) {
+           x %>% sort -> x
+           x[2:(length(x) - 1)] %>% mean %>% return
+         })
+```
+
+## Problem 3
+```{r, warning=FALSE, message=FALSE}
+df <- read_csv("df_for_ml_improved_new_market.csv")
+df %>% head
+```
+
+### a. Is there a change in the sales price in USD over time?
+We can observe a steady increase of aggregate sale price across past several years, though decreases occurred after 2008 and 2011.
+
+The figures for sales price are so large, so we conduct a log-transformation We can witness the same trend for the change in the sales price in USD over time.
+```{r}
+# Aggregate Sales Price Over Time
+ggplot(df, aes(x = year, y = price_usd)) +
+  geom_line(stat = "summary", fun = sum, color = "blue", size = 1) +
+  labs(title = "Aggregate Sales Price Over Time",
+       x = "Year",
+       y = "Aggregate Sales Price (USD)") +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold", size = 16))
+
+```
+
+```{r}
+# Log of Aggregate Sales Price Over Time
+ggplot(df, aes(x = year, y = price_usd)) +
+  geom_line(stat = "summary", fun = function(x) log(sum(x)), color = "blue", size = 1) +
+  labs(title = "Log of Aggregate Sales Price Over Time",
+       x = "Year",
+       y = "Log(Aggregate Sales Price (USD))") +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold", size = 16))
+```
+
+### b. Does the distribution of genre of sales across years appear to change?
+We process the data to get a dataset for analyzing the distribution of genre of sales.
+```{r}
+# Summarize the distribution of genre
+df_genre_distribution <- df %>%
+  group_by(year) %>%
+  summarize(
+    Photography = sum(Genre___Photography),
+    Print = sum(Genre___Print),
+    Sculpture = sum(Genre___Sculpture),
+    Painting = sum(Genre___Painting),
+    Others = sum(Genre___Others)
+  ) %>%
+  pivot_longer(cols = Photography:Others, names_to = "Genre", values_to = "Count")
+
+```
+
+The proportion of Photography Arts sold increased over past years. The sculpture is also popular art genre. The proportion of paintings sold decreased, while print did not see too much fluctuation.
+
+```{r}
+# The distribution of genre of sales (proportion)
+ggplot(df_genre_distribution, aes(x = factor(year), y = Count, fill = Genre)) +
+  geom_bar(stat = "identity", position = "fill") +
+  labs(title = "Distribution of Art Sales Genres Across Years",
+       x = "Year",
+       y = "Proportion",
+       fill = "Genre") +
+  scale_y_continuous(labels = scales::percent_format()) +
+  scale_x_discrete(breaks = function(x) x[seq(1, length(x), by = 2)]) + 
+  scale_fill_brewer(palette = "Set2") + 
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold", size = 16),
+    axis.text.x = element_text(angle = 45, hjust = 1), 
+    legend.position = "top",
+    legend.title = element_text(face = "bold")
+  )
+
+```
+
+We also display the heatmap. The absolute amounts of  sculptures and photography has increased greatly, while those of other three genres didn't see such a significant change.
+```{r}
+# Heatmap
+ggplot(df_genre_distribution, aes(x = factor(year), y = Genre, fill = Count)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient(low = "lightblue", high = "darkblue") +
+  labs(title = "Heatmap of Art Sales Genre Distribution Across Years",
+       x = "Year",
+       y = "Genre",
+       fill = "Sales Count") +
+  scale_x_discrete(breaks = function(x) x[seq(1, length(x), by = 2)]) + 
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold", size = 16), 
+    axis.title = element_text(face = "bold"), 
+    axis.text.x = element_text(angle = 45, hjust = 1), 
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(), 
+    legend.position = "right", 
+    legend.title = element_text(face = "bold")
+  )
+
+
+```
+
+
+
+### c. How does the genre affect the change in sales price over time?
+
+```{r, warning=FALSE, message=FALSE}
+# pivot table
+df_price_by_genre <- df %>%
+  pivot_longer(cols = starts_with("Genre___"), names_to = "Genre", values_to = "present") %>%
+  filter(present == 1) %>% 
+  group_by(year, Genre) %>%
+  summarize(avg_price = mean(price_usd, na.rm = TRUE)) %>%
+  mutate(Genre = gsub("Genre___", "", Genre))
+```
+Both price of painting, photography and others increased greatly. The price of Printing experienced dramatically fluctuation, while that of Sculpture decreased until 2001 and spike after 2001. Photography remains the most valuable art genre.
+```{r}
+# facet plot
+ggplot(df_price_by_genre, aes(x = year, y = avg_price)) +
+  geom_line(color = "blue", size = 1) +
+  facet_wrap(~ Genre, scales = "free_y") + 
+  labs(title = "Sales Price Change Over Time by Genre",
+       x = "Year",
+       y = "Average Sales Price (USD)") +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold", size = 16), 
+    axis.title = element_text(face = "bold"), 
+    axis.text.x = element_text(angle = 45, hjust = 1), 
+    strip.text = element_text(face = "bold"), 
+    panel.grid.major = element_line(color = "lightgrey"), 
+    panel.grid.minor = element_blank(), 
+    legend.position = "top" 
+  )
+
+```
+
+```{r}
+
+# Genre affect the change in sales price over time
+ggplot(df_price_by_genre, aes(x = year, y = avg_price, color = Genre)) +
+  geom_line(size = 1) +
+  labs(title = "Effect of Genre on Sales Price Change Over Time",
+       x = "Year",
+       y = "Average Sales Price (USD)",
+       color = "Genre") +
+  theme_minimal(base_size = 14) +
+  scale_color_brewer(palette = "Set2") +  
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold", size = 16), 
+    axis.title = element_text(face = "bold"), 
+    axis.text.x = element_text(angle = 45, hjust = 1), 
+    legend.position = "top", 
+    legend.title = element_text(face = "bold"),
+    panel.grid.major = element_line(color = "lightgrey"), 
+    panel.grid.minor = element_blank() 
+  )
+```
