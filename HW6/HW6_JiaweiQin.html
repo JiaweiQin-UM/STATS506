@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.5.57">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Jiawei Qin">
+
+<title>STATS506_ProblemSet6</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="HW6_JiaweiQin_files/libs/clipboard/clipboard.min.js"></script>
+<script src="HW6_JiaweiQin_files/libs/quarto-html/quarto.js"></script>
+<script src="HW6_JiaweiQin_files/libs/quarto-html/popper.min.js"></script>
+<script src="HW6_JiaweiQin_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="HW6_JiaweiQin_files/libs/quarto-html/anchor.min.js"></script>
+<link href="HW6_JiaweiQin_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="HW6_JiaweiQin_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="HW6_JiaweiQin_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="HW6_JiaweiQin_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="HW6_JiaweiQin_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+
+
+</head>
+
+<body class="fullcontent">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">STATS506_ProblemSet6</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Jiawei Qin </p>
+          </div>
+  </div>
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>git_address:<a href="https://github.com/JiaweiQin-UM/STATS506.git">“https://github.com/JiaweiQin-UM/STATS506.git”</a></p>
+<section id="load-packages" class="level1">
+<h1>Load Packages</h1>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(DBI)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(parallel)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(future)</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(furrr)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">506</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>lahman <span class="ot">&lt;-</span> <span class="fu">dbConnect</span>(RSQLite<span class="sc">::</span><span class="fu">SQLite</span>(),<span class="st">"lahman_1871-2022.sqlite"</span>)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>lahman</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>&lt;SQLiteConnection&gt;
+  Path: C:\Users\Lenovo\Desktop\24FA\STATS506\HW6\lahman_1871-2022.sqlite
+  Extensions: TRUE</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">dbListTables</span>(lahman)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> [1] "AllstarFull"         "Appearances"         "AwardsManagers"     
+ [4] "AwardsPlayers"       "AwardsShareManagers" "AwardsSharePlayers" 
+ [7] "Batting"             "BattingPost"         "CollegePlaying"     
+[10] "Fielding"            "FieldingOF"          "FieldingOFsplit"    
+[13] "FieldingPost"        "HallOfFame"          "HomeGames"          
+[16] "Managers"            "ManagersHalf"        "Parks"              
+[19] "People"              "Pitching"            "PitchingPost"       
+[22] "Salaries"            "Schools"             "SeriesPost"         
+[25] "Teams"               "TeamsFranchises"     "TeamsHalf"          </code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">dbListFields</span>(lahman, <span class="st">"Teams"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> [1] "yearID"         "lgID"           "teamID"         "franchID"      
+ [5] "divID"          "Rank"           "G"              "Ghome"         
+ [9] "W"              "L"              "DivWin"         "WCWin"         
+[13] "LgWin"          "WSWin"          "R"              "AB"            
+[17] "H"              "2B"             "3B"             "HR"            
+[21] "BB"             "SO"             "SB"             "CS"            
+[25] "HBP"            "SF"             "RA"             "ER"            
+[29] "ERA"            "CG"             "SHO"            "SV"            
+[33] "IPouts"         "HA"             "HRA"            "BBA"           
+[37] "SOA"            "E"              "DP"             "FP"            
+[41] "name"           "park"           "attendance"     "BPF"           
+[45] "PPF"            "teamIDBR"       "teamIDlahman45" "teamIDretro"   </code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>Fielding <span class="ot">&lt;-</span> <span class="fu">dbGetQuery</span>(lahman, <span class="st">"SELECT * FROM Fielding"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">dbDisconnect</span>(lahman)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>Fielding <span class="sc">%&gt;%</span> head</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   playerID yearID stint teamID lgID POS  G GS InnOuts PO A E DP PB WP SB CS ZR
+1 aardsda01   2004     1    SFN   NL   P 11  0      32  0 0 0  0 NA NA NA NA NA
+2 aardsda01   2006     1    CHN   NL   P 45  0     159  1 5 0  1 NA NA NA NA NA
+3 aardsda01   2007     1    CHA   AL   P 25  0      97  2 4 1  0 NA NA NA NA NA
+4 aardsda01   2008     1    BOS   AL   P 47  0     146  3 6 0  0 NA NA NA NA NA
+5 aardsda01   2009     1    SEA   AL   P 73  0     214  2 5 0  1 NA NA NA NA NA
+6 aardsda01   2010     1    SEA   AL   P 53  0     149  2 3 1  0 NA NA NA NA NA</code></pre>
+</div>
+</div>
+<section id="a.-stratified-bootstrap" class="level2">
+<h2 class="anchored" data-anchor-id="a.-stratified-bootstrap">a. Stratified bootstrap</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># calculate RF</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>calculate_rf <span class="ot">&lt;-</span> <span class="cf">function</span>(df) {</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>  <span class="dv">3</span> <span class="sc">*</span> (df<span class="sc">$</span>PO <span class="sc">+</span> df<span class="sc">$</span>A) <span class="sc">/</span> df<span class="sc">$</span>InnOuts</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>Fielding <span class="sc">%&gt;%</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(PO), <span class="sc">!</span><span class="fu">is.na</span>(A), <span class="sc">!</span><span class="fu">is.na</span>(InnOuts), InnOuts <span class="sc">&gt;</span> <span class="dv">0</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">RF =</span> <span class="fu">calculate_rf</span>(.)) <span class="ot">-&gt;</span> Fielding</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<section id="avg_rf" class="level3">
+<h3 class="anchored" data-anchor-id="avg_rf">Avg_RF</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>Fielding <span class="sc">%&gt;%</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(teamID) <span class="sc">%&gt;%</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">Avg_RF =</span> <span class="fu">mean</span>(RF, <span class="at">na.rm =</span> <span class="cn">TRUE</span>), <span class="at">.groups =</span> <span class="st">"drop"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="sc">-</span>Avg_RF)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 140 × 2
+   teamID Avg_RF
+   &lt;chr&gt;   &lt;dbl&gt;
+ 1 RC1     0.574
+ 2 LS1     0.530
+ 3 ELI     0.527
+ 4 MLU     0.513
+ 5 KEO     0.512
+ 6 RIC     0.509
+ 7 BLA     0.495
+ 8 LS3     0.489
+ 9 TRN     0.481
+10 PHU     0.481
+# ℹ 130 more rows</code></pre>
+</div>
+</div>
+<p>So, the average RF for each team in the Fielding table is shown above.</p>
+</section>
+<section id="without-parallel" class="level3">
+<h3 class="anchored" data-anchor-id="without-parallel">1. without parallel</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Stratified bootstrap function without parallel processing</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>stratified_bootstrap <span class="ot">&lt;-</span> <span class="cf">function</span>(data, target_col, strata_col, n_bootstrap) {</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>  strata_levels <span class="ot">&lt;-</span> <span class="fu">unique</span>(data[[strata_col]])</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>  bootstrap_samples <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (level <span class="cf">in</span> strata_levels) {</span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>    stratum_data <span class="ot">&lt;-</span> data[data[[strata_col]] <span class="sc">==</span> level, ]</span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>    sampled_data <span class="ot">&lt;-</span> stratum_data[[target_col]][<span class="fu">sample</span>(<span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(stratum_data), n_bootstrap, <span class="at">replace =</span> <span class="cn">TRUE</span>)]</span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>    bootstrap_samples[[level]] <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>      <span class="at">bootstrap_sample =</span> sampled_data,</span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>      <span class="at">stratum =</span> level</span>
+<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a>  bootstrap_result <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind, bootstrap_samples)</span>
+<span id="cb17-16"><a href="#cb17-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rownames</span>(bootstrap_result) <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb17-17"><a href="#cb17-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(bootstrap_result)</span>
+<span id="cb17-18"><a href="#cb17-18" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Running the bootstrap</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>start1 <span class="ot">&lt;-</span> <span class="fu">Sys.time</span>()</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>d1 <span class="ot">&lt;-</span> <span class="fu">stratified_bootstrap</span>(Fielding, <span class="st">'RF'</span>, <span class="st">'teamID'</span>, <span class="dv">1000</span>)</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>end1 <span class="ot">&lt;-</span> <span class="fu">Sys.time</span>()</span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>time1 <span class="ot">&lt;-</span> end1 <span class="sc">-</span> start1</span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>time1</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Time difference of 2.067537 secs</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Summarizing the results</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>result1 <span class="ot">&lt;-</span> d1 <span class="sc">%&gt;%</span></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(stratum) <span class="sc">%&gt;%</span></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">mean_RF =</span> <span class="fu">mean</span>(bootstrap_sample, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">std_error =</span> <span class="fu">sd</span>(bootstrap_sample, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>result1</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 140 × 3
+   stratum mean_RF std_error
+   &lt;chr&gt;     &lt;dbl&gt;     &lt;dbl&gt;
+ 1 ALT       0.395     0.311
+ 2 ANA       0.408     0.333
+ 3 ARI       0.367     0.345
+ 4 ATL       0.390     0.320
+ 5 BAL       0.404     0.332
+ 6 BFN       0.433     0.316
+ 7 BFP       0.431     0.366
+ 8 BL1       0.426     0.293
+ 9 BL2       0.403     0.325
+10 BL3       0.456     0.314
+# ℹ 130 more rows</code></pre>
+</div>
+</div>
+</section>
+<section id="with-parallel-processingparlapply" class="level3">
+<h3 class="anchored" data-anchor-id="with-parallel-processingparlapply">2. with parallel processing(ParLapply)</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co"># with parallel processing (ParLapply)</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>stratified_bootstrap_parallel <span class="ot">&lt;-</span> <span class="cf">function</span>(data, target_col, strata_col, n_bootstrap) {</span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>  strata_levels <span class="ot">&lt;-</span> <span class="fu">unique</span>(data[[strata_col]])</span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>  num_cores <span class="ot">&lt;-</span> <span class="fu">detectCores</span>()<span class="sc">/</span><span class="dv">2</span></span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>  cl <span class="ot">&lt;-</span> <span class="fu">makeCluster</span>(num_cores)</span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>  bootstrap_samples <span class="ot">&lt;-</span> <span class="fu">parLapply</span>(cl, strata_levels, <span class="cf">function</span>(level) {</span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>    stratum_data <span class="ot">&lt;-</span> data[data[[strata_col]] <span class="sc">==</span> level, ]</span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>    sampled_data <span class="ot">&lt;-</span> stratum_data[[target_col]][<span class="fu">sample</span>(<span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(stratum_data), n_bootstrap, <span class="at">replace =</span> <span class="cn">TRUE</span>)]</span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">data.frame</span>(</span>
+<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a>      <span class="at">bootstrap_sample =</span> sampled_data,</span>
+<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a>      <span class="at">stratum =</span> level</span>
+<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb22-14"><a href="#cb22-14" aria-hidden="true" tabindex="-1"></a>  })</span>
+<span id="cb22-15"><a href="#cb22-15" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb22-16"><a href="#cb22-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stopCluster</span>(cl)</span>
+<span id="cb22-17"><a href="#cb22-17" aria-hidden="true" tabindex="-1"></a>  bootstrap_result <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind, bootstrap_samples)</span>
+<span id="cb22-18"><a href="#cb22-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rownames</span>(bootstrap_result) <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb22-19"><a href="#cb22-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(bootstrap_result)</span>
+<span id="cb22-20"><a href="#cb22-20" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Running the bootstrap</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>start2 <span class="ot">&lt;-</span> <span class="fu">Sys.time</span>()</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>d2 <span class="ot">&lt;-</span> <span class="fu">stratified_bootstrap_parallel</span>(Fielding, <span class="st">'RF'</span>, <span class="st">'teamID'</span>, <span class="dv">1000</span>)</span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>end2 <span class="ot">&lt;-</span> <span class="fu">Sys.time</span>()</span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>time2 <span class="ot">&lt;-</span> end2 <span class="sc">-</span> start2</span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>time2</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Time difference of 1.318002 secs</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Summarizing the results</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>result2 <span class="ot">&lt;-</span> d2 <span class="sc">%&gt;%</span></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(stratum) <span class="sc">%&gt;%</span></span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">mean_RF =</span> <span class="fu">mean</span>(bootstrap_sample, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">std_error =</span> <span class="fu">sd</span>(bootstrap_sample, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a> result2</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 140 × 3
+   stratum mean_RF std_error
+   &lt;chr&gt;     &lt;dbl&gt;     &lt;dbl&gt;
+ 1 ALT       0.386     0.307
+ 2 ANA       0.394     0.321
+ 3 ARI       0.384     0.356
+ 4 ATL       0.390     0.360
+ 5 BAL       0.388     0.343
+ 6 BFN       0.455     0.318
+ 7 BFP       0.462     0.388
+ 8 BL1       0.442     0.305
+ 9 BL2       0.409     0.315
+10 BL3       0.446     0.312
+# ℹ 130 more rows</code></pre>
+</div>
+</div>
+</section>
+<section id="future-package" class="level3">
+<h3 class="anchored" data-anchor-id="future-package">3. Future Package</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Future Package</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>stratified_bootstrap_future <span class="ot">&lt;-</span> <span class="cf">function</span>(data, target_col, strata_col, n_bootstrap) {</span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>  strata_levels <span class="ot">&lt;-</span> <span class="fu">unique</span>(data[[strata_col]])</span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plan</span>(multisession)  <span class="co"># Windows-friendly plan</span></span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>  bootstrap_samples <span class="ot">&lt;-</span> <span class="fu">future_map</span>(strata_levels, <span class="cf">function</span>(level) {</span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>    stratum_data <span class="ot">&lt;-</span> data[data[[strata_col]] <span class="sc">==</span> level, ]</span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>    sampled_data <span class="ot">&lt;-</span> stratum_data[[target_col]][<span class="fu">sample</span>(<span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(stratum_data), n_bootstrap, <span class="at">replace =</span> <span class="cn">TRUE</span>)]</span>
+<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">data.frame</span>(</span>
+<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a>      <span class="at">bootstrap_sample =</span> sampled_data,</span>
+<span id="cb27-11"><a href="#cb27-11" aria-hidden="true" tabindex="-1"></a>      <span class="at">stratum =</span> level</span>
+<span id="cb27-12"><a href="#cb27-12" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb27-13"><a href="#cb27-13" aria-hidden="true" tabindex="-1"></a>  })</span>
+<span id="cb27-14"><a href="#cb27-14" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb27-15"><a href="#cb27-15" aria-hidden="true" tabindex="-1"></a>  bootstrap_result <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind, bootstrap_samples)</span>
+<span id="cb27-16"><a href="#cb27-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rownames</span>(bootstrap_result) <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb27-17"><a href="#cb27-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plan</span>(sequential)  <span class="co"># Reset to sequential</span></span>
+<span id="cb27-18"><a href="#cb27-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(bootstrap_result)</span>
+<span id="cb27-19"><a href="#cb27-19" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Running the bootstrap</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>start3 <span class="ot">&lt;-</span> <span class="fu">Sys.time</span>()</span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>d3 <span class="ot">&lt;-</span> <span class="fu">stratified_bootstrap_future</span>(Fielding, <span class="st">'RF'</span>, <span class="st">'teamID'</span>, <span class="dv">1000</span>)</span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>end3 <span class="ot">&lt;-</span> <span class="fu">Sys.time</span>()</span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>time3 <span class="ot">&lt;-</span> end3 <span class="sc">-</span> start3</span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a>time3</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Time difference of 7.274712 secs</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Summarizing the results</span></span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>result3 <span class="ot">&lt;-</span> d3 <span class="sc">%&gt;%</span></span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(stratum) <span class="sc">%&gt;%</span></span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">mean_RF =</span> <span class="fu">mean</span>(bootstrap_sample, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">std_error =</span> <span class="fu">sd</span>(bootstrap_sample, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-9"><a href="#cb30-9" aria-hidden="true" tabindex="-1"></a>result3</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 140 × 3
+   stratum mean_RF std_error
+   &lt;chr&gt;     &lt;dbl&gt;     &lt;dbl&gt;
+ 1 ALT       0.399     0.323
+ 2 ANA       0.400     0.322
+ 3 ARI       0.360     0.362
+ 4 ATL       0.370     0.306
+ 5 BAL       0.400     0.331
+ 6 BFN       0.487     0.355
+ 7 BFP       0.456     0.389
+ 8 BL1       0.435     0.294
+ 9 BL2       0.401     0.320
+10 BL3       0.441     0.309
+# ℹ 130 more rows</code></pre>
+</div>
+</div>
+</section>
+</section>
+<section id="b.-teams-with-the-10-highest-rf" class="level2">
+<h2 class="anchored" data-anchor-id="b.-teams-with-the-10-highest-rf">b. Teams with the 10 highest RF</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>result1<span class="sc">$</span>method <span class="ot">&lt;-</span> <span class="st">"No Parallel"</span></span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>result2<span class="sc">$</span>method <span class="ot">&lt;-</span> <span class="st">"Parallel"</span></span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>result3<span class="sc">$</span>method <span class="ot">&lt;-</span> <span class="st">"Future"</span></span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a><span class="co"># merge</span></span>
+<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a>final_results <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(result1, result2, result3)</span>
+<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a><span class="co"># top 10 df</span></span>
+<span id="cb32-9"><a href="#cb32-9" aria-hidden="true" tabindex="-1"></a>top_10_results <span class="ot">&lt;-</span> final_results <span class="sc">%&gt;%</span></span>
+<span id="cb32-10"><a href="#cb32-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(method) <span class="sc">%&gt;%</span></span>
+<span id="cb32-11"><a href="#cb32-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(mean_RF)) <span class="sc">%&gt;%</span></span>
+<span id="cb32-12"><a href="#cb32-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">mean_RF =</span> <span class="fu">round</span>(mean_RF, <span class="dv">3</span>),</span>
+<span id="cb32-13"><a href="#cb32-13" aria-hidden="true" tabindex="-1"></a>         <span class="at">std_error =</span> <span class="fu">round</span>(std_error, <span class="dv">3</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb32-14"><a href="#cb32-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice_head</span>(<span class="at">n =</span> <span class="dv">10</span>)</span>
+<span id="cb32-15"><a href="#cb32-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-16"><a href="#cb32-16" aria-hidden="true" tabindex="-1"></a><span class="co"># print</span></span>
+<span id="cb32-17"><a href="#cb32-17" aria-hidden="true" tabindex="-1"></a>top_10_results[top_10_results<span class="sc">$</span>method<span class="sc">==</span><span class="st">'No Parallel'</span>,]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 10 × 4
+# Groups:   method [1]
+   stratum mean_RF std_error method     
+   &lt;chr&gt;     &lt;dbl&gt;     &lt;dbl&gt; &lt;chr&gt;      
+ 1 RC1       0.564     0.422 No Parallel
+ 2 LS1       0.545     0.443 No Parallel
+ 3 RIC       0.533     0.393 No Parallel
+ 4 ELI       0.529     0.381 No Parallel
+ 5 MLU       0.524     0.533 No Parallel
+ 6 KEO       0.513     0.405 No Parallel
+ 7 LS3       0.508     0.33  No Parallel
+ 8 BLA       0.496     0.328 No Parallel
+ 9 CHP       0.489     0.307 No Parallel
+10 LS2       0.481     0.355 No Parallel</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>top_10_results[top_10_results<span class="sc">$</span>method<span class="sc">==</span><span class="st">'Parallel'</span>,]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 10 × 4
+# Groups:   method [1]
+   stratum mean_RF std_error method  
+   &lt;chr&gt;     &lt;dbl&gt;     &lt;dbl&gt; &lt;chr&gt;   
+ 1 RC1       0.581     0.44  Parallel
+ 2 LS1       0.522     0.416 Parallel
+ 3 ELI       0.52      0.36  Parallel
+ 4 RIC       0.518     0.379 Parallel
+ 5 MLU       0.518     0.523 Parallel
+ 6 BLA       0.502     0.334 Parallel
+ 7 RC2       0.487     0.314 Parallel
+ 8 KEO       0.487     0.387 Parallel
+ 9 CHP       0.481     0.292 Parallel
+10 PHA       0.48      0.362 Parallel</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>top_10_results[top_10_results<span class="sc">$</span>method<span class="sc">==</span><span class="st">'Future'</span>,]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 10 × 4
+# Groups:   method [1]
+   stratum mean_RF std_error method
+   &lt;chr&gt;     &lt;dbl&gt;     &lt;dbl&gt; &lt;chr&gt; 
+ 1 RC1       0.568     0.436 Future
+ 2 LS1       0.545     0.424 Future
+ 3 ELI       0.531     0.38  Future
+ 4 KEO       0.522     0.411 Future
+ 5 PHU       0.494     0.349 Future
+ 6 MLU       0.491     0.509 Future
+ 7 RIC       0.491     0.355 Future
+ 8 LS3       0.487     0.328 Future
+ 9 BFN       0.487     0.355 Future
+10 TRO       0.483     0.298 Future</code></pre>
+</div>
+</div>
+</section>
+<section id="c.-performance-difference" class="level2">
+<h2 class="anchored" data-anchor-id="c.-performance-difference">c.&nbsp;Performance difference</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Performance comparison table</span></span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>time_comparison <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">Method =</span> <span class="fu">c</span>(<span class="st">"No Parallel"</span>, <span class="st">"Parallel"</span>, <span class="st">"Future"</span>),</span>
+<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">Time =</span> <span class="fu">c</span>(time1, time2, time3)</span>
+<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb38-6"><a href="#cb38-6" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(time_comparison)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>       Method          Time
+1 No Parallel 2.067537 secs
+2    Parallel 1.318002 secs
+3      Future 7.274712 secs</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="co"># confidence_interval</span></span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>top_10_results<span class="sc">$</span>lb <span class="ot">&lt;-</span> </span>
+<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">round</span>(top_10_results<span class="sc">$</span>mean_RF <span class="sc">-</span> <span class="fl">1.96</span><span class="sc">*</span> top_10_results<span class="sc">$</span>std_error,<span class="dv">3</span>)</span>
+<span id="cb40-4"><a href="#cb40-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb40-5"><a href="#cb40-5" aria-hidden="true" tabindex="-1"></a>top_10_results<span class="sc">$</span>ub <span class="ot">&lt;-</span> </span>
+<span id="cb40-6"><a href="#cb40-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">round</span>(top_10_results<span class="sc">$</span>mean_RF <span class="sc">+</span> <span class="fl">1.96</span><span class="sc">*</span> top_10_results<span class="sc">$</span>std_error,<span class="dv">3</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="co"># print</span></span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>top_10_results[top_10_results<span class="sc">$</span>method<span class="sc">==</span><span class="st">'No Parallel'</span>,<span class="sc">-</span><span class="fu">c</span>(<span class="dv">4</span>)]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 10 × 5
+   stratum mean_RF std_error     lb    ub
+   &lt;chr&gt;     &lt;dbl&gt;     &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt;
+ 1 RC1       0.564     0.422 -0.263  1.39
+ 2 LS1       0.545     0.443 -0.323  1.41
+ 3 RIC       0.533     0.393 -0.237  1.30
+ 4 ELI       0.529     0.381 -0.218  1.28
+ 5 MLU       0.524     0.533 -0.521  1.57
+ 6 KEO       0.513     0.405 -0.281  1.31
+ 7 LS3       0.508     0.33  -0.139  1.16
+ 8 BLA       0.496     0.328 -0.147  1.14
+ 9 CHP       0.489     0.307 -0.113  1.09
+10 LS2       0.481     0.355 -0.215  1.18</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>top_10_results[top_10_results<span class="sc">$</span>method<span class="sc">==</span><span class="st">'Parallel'</span>,<span class="sc">-</span><span class="fu">c</span>(<span class="dv">4</span>)]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 10 × 5
+   stratum mean_RF std_error     lb    ub
+   &lt;chr&gt;     &lt;dbl&gt;     &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt;
+ 1 RC1       0.581     0.44  -0.281  1.44
+ 2 LS1       0.522     0.416 -0.293  1.34
+ 3 ELI       0.52      0.36  -0.186  1.23
+ 4 RIC       0.518     0.379 -0.225  1.26
+ 5 MLU       0.518     0.523 -0.507  1.54
+ 6 BLA       0.502     0.334 -0.153  1.16
+ 7 RC2       0.487     0.314 -0.128  1.10
+ 8 KEO       0.487     0.387 -0.272  1.25
+ 9 CHP       0.481     0.292 -0.091  1.05
+10 PHA       0.48      0.362 -0.23   1.19</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb45"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>top_10_results[top_10_results<span class="sc">$</span>method<span class="sc">==</span><span class="st">'Future'</span>,<span class="sc">-</span><span class="fu">c</span>(<span class="dv">4</span>)]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 10 × 5
+   stratum mean_RF std_error     lb    ub
+   &lt;chr&gt;     &lt;dbl&gt;     &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt;
+ 1 RC1       0.568     0.436 -0.287  1.42
+ 2 LS1       0.545     0.424 -0.286  1.38
+ 3 ELI       0.531     0.38  -0.214  1.28
+ 4 KEO       0.522     0.411 -0.284  1.33
+ 5 PHU       0.494     0.349 -0.19   1.18
+ 6 MLU       0.491     0.509 -0.507  1.49
+ 7 RIC       0.491     0.355 -0.205  1.19
+ 8 LS3       0.487     0.328 -0.156  1.13
+ 9 BFN       0.487     0.355 -0.209  1.18
+10 TRO       0.483     0.298 -0.101  1.07</code></pre>
+</div>
+</div>
+<p>The total times spent in 3 methods vary. The method without parallel consumed the least time, while the method using Future package took the longest time:</p>
+<p>No Parallel: 1.361836 secs<br>
+Parallel: 2.097988 secs<br>
+Future: 8.416977 secs</p>
+<p>There are also some differences in the calculated average RF for each team among these methods, but not too much.</p>
+</section>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const onCopySuccess = function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  }
+  const getTextToCopy = function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+    text: getTextToCopy
+  });
+  clipboard.on('success', onCopySuccess);
+  if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+    // For code content inside modals, clipBoardJS needs to be initialized with a container option
+    // TODO: Check when it could be a function (https://github.com/zenorocha/clipboard.js/issues/860)
+    const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+      text: getTextToCopy,
+      container: window.document.getElementById('quarto-embedded-source-code-modal')
+    });
+    clipboardModal.on('success', onCopySuccess);
+  }
+    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+    var mailtoRegex = new RegExp(/^mailto:/);
+      var filterRegex = new RegExp('/' + window.location.host + '/');
+    var isInternal = (href) => {
+        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+    }
+    // Inspect non-navigation links and adorn them if external
+ 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+    for (var i=0; i<links.length; i++) {
+      const link = links[i];
+      if (!isInternal(link.href)) {
+        // undo the damage that might have been done by quarto-nav.js in the case of
+        // links that we want to consider external
+        if (link.dataset.originalHref !== undefined) {
+          link.href = link.dataset.originalHref;
+        }
+      }
+    }
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      if (note) {
+        return note.innerHTML;
+      } else {
+        return "";
+      }
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      // TODO in 1.5, we should make sure this works without a callout special case
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

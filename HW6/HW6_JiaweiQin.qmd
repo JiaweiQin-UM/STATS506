@@ -1,0 +1,277 @@
+---
+title: "STATS506_ProblemSet6"
+author: "Jiawei Qin"
+format: html
+editor: visual
+execute:
+  error: true
+---
+
+git_address:["https://github.com/JiaweiQin-UM/STATS506.git"](https://github.com/JiaweiQin-UM/STATS506.git)
+
+# Load Packages
+
+```{r, warning=FALSE,message=FALSE}
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(DBI)
+library(parallel)
+library(future)
+library(furrr)
+```
+
+```{r}
+set.seed(506)
+```
+
+
+```{r}
+lahman <- dbConnect(RSQLite::SQLite(),"lahman_1871-2022.sqlite")
+lahman
+```
+
+```{r}
+dbListTables(lahman)
+```
+
+```{r}
+dbListFields(lahman, "Teams")
+```
+
+```{r}
+Fielding <- dbGetQuery(lahman, "SELECT * FROM Fielding")
+```
+
+```{r}
+dbDisconnect(lahman)
+```
+
+```{r}
+Fielding %>% head
+```
+
+## a. Stratified bootstrap
+
+```{r}
+# calculate RF
+calculate_rf <- function(df) {
+  3 * (df$PO + df$A) / df$InnOuts
+}
+```
+
+```{r}
+Fielding %>%
+  filter(!is.na(PO), !is.na(A), !is.na(InnOuts), InnOuts > 0) %>%
+  mutate(RF = calculate_rf(.)) -> Fielding
+```
+
+### Avg_RF
+```{r}
+Fielding %>%
+  group_by(teamID) %>%
+  summarize(Avg_RF = mean(RF, na.rm = TRUE), .groups = "drop") %>%
+  arrange(-Avg_RF)
+```
+So, the average RF for each team in the Fielding table is shown above.
+
+### 1. without parallel
+```{r}
+# Stratified bootstrap function without parallel processing
+stratified_bootstrap <- function(data, target_col, strata_col, n_bootstrap) {
+  strata_levels <- unique(data[[strata_col]])
+  bootstrap_samples <- list()
+  
+  for (level in strata_levels) {
+    stratum_data <- data[data[[strata_col]] == level, ]
+    sampled_data <- stratum_data[[target_col]][sample(1:nrow(stratum_data), n_bootstrap, replace = TRUE)]
+    bootstrap_samples[[level]] <- data.frame(
+      bootstrap_sample = sampled_data,
+      stratum = level
+    )
+  }
+  
+  bootstrap_result <- do.call(rbind, bootstrap_samples)
+  rownames(bootstrap_result) <- NULL
+  return(bootstrap_result)
+}
+```
+
+
+```{r}
+# Running the bootstrap
+start1 <- Sys.time()
+d1 <- stratified_bootstrap(Fielding, 'RF', 'teamID', 1000)
+end1 <- Sys.time()
+time1 <- end1 - start1
+time1
+```
+
+
+```{r}
+# Summarizing the results
+result1 <- d1 %>%
+  group_by(stratum) %>%
+  summarise(
+    mean_RF = mean(bootstrap_sample, na.rm = TRUE),
+    std_error = sd(bootstrap_sample, na.rm = TRUE)
+  )
+
+result1
+```
+
+### 2. with parallel processing(ParLapply)
+```{r}
+# with parallel processing (ParLapply)
+stratified_bootstrap_parallel <- function(data, target_col, strata_col, n_bootstrap) {
+  strata_levels <- unique(data[[strata_col]])
+  num_cores <- detectCores()/2
+  cl <- makeCluster(num_cores)
+  
+  bootstrap_samples <- parLapply(cl, strata_levels, function(level) {
+    stratum_data <- data[data[[strata_col]] == level, ]
+    sampled_data <- stratum_data[[target_col]][sample(1:nrow(stratum_data), n_bootstrap, replace = TRUE)]
+    data.frame(
+      bootstrap_sample = sampled_data,
+      stratum = level
+    )
+  })
+  
+  stopCluster(cl)
+  bootstrap_result <- do.call(rbind, bootstrap_samples)
+  rownames(bootstrap_result) <- NULL
+  return(bootstrap_result)
+}
+```
+
+
+```{r}
+# Running the bootstrap
+start2 <- Sys.time()
+d2 <- stratified_bootstrap_parallel(Fielding, 'RF', 'teamID', 1000)
+end2 <- Sys.time()
+time2 <- end2 - start2
+time2
+```
+
+
+```{r}
+# Summarizing the results
+result2 <- d2 %>%
+  group_by(stratum) %>%
+  summarise(
+    mean_RF = mean(bootstrap_sample, na.rm = TRUE),
+    std_error = sd(bootstrap_sample, na.rm = TRUE)
+  )
+
+ result2
+
+```
+
+### 3. Future Package
+```{r}
+# Future Package
+stratified_bootstrap_future <- function(data, target_col, strata_col, n_bootstrap) {
+  strata_levels <- unique(data[[strata_col]])
+  plan(multisession)  # Windows-friendly plan
+  
+  bootstrap_samples <- future_map(strata_levels, function(level) {
+    stratum_data <- data[data[[strata_col]] == level, ]
+    sampled_data <- stratum_data[[target_col]][sample(1:nrow(stratum_data), n_bootstrap, replace = TRUE)]
+    data.frame(
+      bootstrap_sample = sampled_data,
+      stratum = level
+    )
+  })
+  
+  bootstrap_result <- do.call(rbind, bootstrap_samples)
+  rownames(bootstrap_result) <- NULL
+  plan(sequential)  # Reset to sequential
+  return(bootstrap_result)
+}
+```
+
+
+```{r, warning=FALSE}
+# Running the bootstrap
+start3 <- Sys.time()
+d3 <- stratified_bootstrap_future(Fielding, 'RF', 'teamID', 1000)
+end3 <- Sys.time()
+time3 <- end3 - start3
+time3
+```
+
+
+```{r}
+# Summarizing the results
+result3 <- d3 %>%
+  group_by(stratum) %>%
+  summarise(
+    mean_RF = mean(bootstrap_sample, na.rm = TRUE),
+    std_error = sd(bootstrap_sample, na.rm = TRUE)
+  )
+
+result3
+```
+
+
+## b. Teams with the 10 highest RF
+```{r}
+result1$method <- "No Parallel"
+result2$method <- "Parallel"
+result3$method <- "Future"
+
+# merge
+final_results <- bind_rows(result1, result2, result3)
+
+# top 10 df
+top_10_results <- final_results %>%
+  group_by(method) %>%
+  arrange(desc(mean_RF)) %>%
+  mutate(mean_RF = round(mean_RF, 3),
+         std_error = round(std_error, 3)) %>%
+  slice_head(n = 10)
+
+# print
+top_10_results[top_10_results$method=='No Parallel',]
+top_10_results[top_10_results$method=='Parallel',]
+top_10_results[top_10_results$method=='Future',]
+
+```
+
+## c.  Performance difference
+
+```{r}
+# Performance comparison table
+time_comparison <- data.frame(
+  Method = c("No Parallel", "Parallel", "Future"),
+  Time = c(time1, time2, time3)
+)
+print(time_comparison)
+```
+
+
+```{r}
+# confidence_interval
+top_10_results$lb <- 
+  round(top_10_results$mean_RF - 1.96* top_10_results$std_error,3)
+
+top_10_results$ub <- 
+  round(top_10_results$mean_RF + 1.96* top_10_results$std_error,3)
+```
+
+```{r}
+# print
+top_10_results[top_10_results$method=='No Parallel',-c(4)]
+top_10_results[top_10_results$method=='Parallel',-c(4)]
+top_10_results[top_10_results$method=='Future',-c(4)]
+```
+
+The total times spent in 3 methods vary. The method without parallel consumed the least time, while the method using Future package took the longest time:
+
+No Parallel:	1.361836 secs			
+Parallel:	2.097988 secs			
+Future:	8.416977 secs	
+
+There are also some differences in the calculated average RF for each team among these methods, but not too much.
+
