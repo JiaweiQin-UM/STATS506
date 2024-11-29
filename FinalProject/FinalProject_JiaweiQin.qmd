@@ -383,8 +383,7 @@ df %>%
   mutate(Airline_Size = case_when(
     Airline %in% c("Delta Air Lines", 
                    "American Airlines", 
-                   "United Airlines", 
-                   "Southwest Airlines") ~ "Large",
+                   "United Airlines") ~ "Large",
     TRUE ~ "Non-large"
   )) %>%
   filter(!if_all(c(CarrierDelay, WeatherDelay, NASDelay, SecurityDelay, LateAircraftDelay), is.na)) %>%
